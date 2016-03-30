@@ -1,9 +1,15 @@
 package render
 
-import "net/http"
+import (
+	"fmt"
+	"html/template"
+	"net/http"
+	"os"
+	"path/filepath"
+)
 
 type Render struct {
-	ViewPaths string
+	ViewPaths []string
 }
 
 func New(viewPaths ...string) *Render {
@@ -11,18 +17,35 @@ func New(viewPaths ...string) *Render {
 }
 
 type Template struct {
-	*Render
-	Layout string
+	render *Render
+	layout string
 }
 
 func (render *Render) Layout(name string) *Template {
-	return Template{Render: render, Layout: name}
+	return &Template{render: render, layout: name}
 }
 
-func (render *Render) Render(name string) *Template {
-	return render.Layout("application").Render(name)
+func (render *Render) Render(name string, context interface{}, request *http.Request, writer http.ResponseWriter) error {
+	return render.Layout("application").Render(name, context, request, writer)
 }
 
-func (tmpl *Template) Render(name string, context interface{}, request *http.Request, writer http.ResponseWriter) *Template {
-	return tmpl.Execute(writer, context)
+func (tmpl *Template) Render(name string, context interface{}, request *http.Request, writer http.ResponseWriter) (err error) {
+	if filename, err := tmpl.findTemplate(name); err == nil {
+		layoutName, _ := tmpl.findTemplate(filepath.Join("layouts", tmpl.layout))
+
+		if t, err := template.New(filepath.Base(filename)).ParseFiles(layoutName, filename); err == nil {
+			return t.Execute(writer, context)
+		}
+	}
+	return err
+}
+
+func (tmpl *Template) findTemplate(name string) (string, error) {
+	for _, viewPath := range tmpl.render.ViewPaths {
+		filename := filepath.Join(viewPath, name)
+		if _, err := os.Stat(filename); !os.IsNotExist(err) {
+			return filename, nil
+		}
+	}
+	return "", fmt.Errorf("template not found: %v", name)
 }

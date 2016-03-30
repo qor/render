@@ -9,9 +9,11 @@ import "github.com/qor/render"
 
 func main() {
   Render := render.New()
-  Render.Layout("application").Render("index", request, write)
+  Render.Layout("application").Render("index", request, writer)
 }
 ```
+
+// http.StatusOK, template name, context, request, writer
 
 ## TODO
 
