@@ -3,6 +3,7 @@ package render
 import (
 	"html/template"
 	"net/http"
+	"path/filepath"
 )
 
 type Render struct {
@@ -11,6 +12,10 @@ type Render struct {
 }
 
 func New(viewPaths ...string) *Render {
+	if isExistingDir(filepath.Join(root, "app/views")) {
+		viewPaths = append(viewPaths, filepath.Join(root, "app/views"))
+	}
+
 	return &Render{ViewPaths: viewPaths}
 }
 
