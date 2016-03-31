@@ -2,7 +2,7 @@ package render
 
 import "os"
 
-var root = "."
+var root, _ = os.Getwd()
 
 func init() {
 	if path := os.Getenv("WEB_ROOT"); path != "" {
