@@ -24,14 +24,19 @@ func (tmpl *Template) Render(name string, context interface{}, request *http.Req
 		var t *template.Template
 		var funcMap = tmpl.render.funcMaps
 		funcMap["render"] = func(name string) template.HTML {
+			var err error
 			if filename, ok := tmpl.findTemplate(name); ok {
+				var partialTemplate *template.Template
 				result := bytes.NewBufferString("")
-				template.New(filepath.Base(filename)).Funcs(funcMap).ParseFiles(filename)
-				t.Execute(result, context)
-				return template.HTML(result.String())
+				if partialTemplate, err = template.New(filepath.Base(filename)).Funcs(funcMap).ParseFiles(filename); err == nil {
+					partialTemplate.Execute(result, context)
+					return template.HTML(result.String())
+				}
 			}
 
-			fmt.Printf("failed to find template %v\n", name)
+			if err != nil {
+				fmt.Printf("failed to find template %v\n", name)
+			}
 			return ""
 		}
 
