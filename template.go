@@ -1,6 +1,7 @@
 package render
 
 import (
+	"bytes"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -21,6 +22,19 @@ func (tmpl *Template) Render(name string, context interface{}, request *http.Req
 		}
 
 		var t *template.Template
+		var funcMap = tmpl.render.funcMaps
+		funcMap["render"] = func(name string) template.HTML {
+			if filename, ok := tmpl.findTemplate(name); ok {
+				result := bytes.NewBufferString("")
+				template.New(filepath.Base(filename)).Funcs(funcMap).ParseFiles(filename)
+				t.Execute(result, context)
+				return template.HTML(result.String())
+			}
+
+			fmt.Printf("failed to find template %v\n", name)
+			return ""
+		}
+
 		if t, err = template.New(filepath.Base(filename)).Funcs(tmpl.render.funcMaps).ParseFiles(filenames...); err == nil {
 			return t.Execute(writer, context)
 		}
