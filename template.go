@@ -36,7 +36,7 @@ func (tmpl *Template) Render(name string, context interface{}, request *http.Req
 		}
 
 		if t, err = template.New(filepath.Base(filename)).Funcs(tmpl.render.funcMaps).ParseFiles(filenames...); err == nil {
-			return t.Execute(writer, context)
+			err = t.Execute(writer, context)
 		}
 	}
 
