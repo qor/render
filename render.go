@@ -28,5 +28,8 @@ func (render *Render) Render(name string, context interface{}, request *http.Req
 }
 
 func (render *Render) RegisterFuncMap(name string, fc interface{}) {
+	if render.funcMaps == nil {
+		render.funcMaps = template.FuncMap{}
+	}
 	render.funcMaps[name] = fc
 }
