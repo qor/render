@@ -16,7 +16,7 @@ func New(viewPaths ...string) *Render {
 		viewPaths = append(viewPaths, filepath.Join(root, "app/views"))
 	}
 
-	return &Render{ViewPaths: viewPaths}
+	return &Render{ViewPaths: viewPaths, funcMaps: map[string]interface{}{}}
 }
 
 func (render *Render) Layout(name string) *Template {
