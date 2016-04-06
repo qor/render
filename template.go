@@ -23,8 +23,8 @@ func (tmpl *Template) Execute(name string, context interface{}, request *http.Re
 			filenames = append(filenames, layout)
 		}
 
-		var result = map[string]interface{}{
-			"Template": filename,
+		var obj = map[string]interface{}{
+			"Template": name,
 			"Result":   context,
 		}
 
@@ -37,8 +37,9 @@ func (tmpl *Template) Execute(name string, context interface{}, request *http.Re
 				var partialTemplate *template.Template
 				result := bytes.NewBufferString("")
 				if partialTemplate, err = template.New(filepath.Base(filename)).Funcs(funcMap).ParseFiles(filename); err == nil {
-					partialTemplate.Execute(result, result)
-					return template.HTML(result.String()), nil
+					if err = partialTemplate.Execute(result, obj); err == nil {
+						return template.HTML(result.String()), err
+					}
 				}
 			} else {
 				err = fmt.Errorf("failed to find template: %v", name)
@@ -50,7 +51,7 @@ func (tmpl *Template) Execute(name string, context interface{}, request *http.Re
 		// parse templates
 		var t *template.Template
 		if t, err = template.New(filepath.Base(layout)).Funcs(tmpl.render.funcMaps).ParseFiles(filenames...); err == nil {
-			err = t.Execute(writer, result)
+			err = t.Execute(writer, obj)
 		}
 	}
 
