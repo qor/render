@@ -10,8 +10,26 @@ import (
 )
 
 type Template struct {
-	render *Render
-	layout string
+	render  *Render
+	layout  string
+	funcMap template.FuncMap
+}
+
+func (tmpl *Template) FuncMap() template.FuncMap {
+	if tmpl.funcMap == nil {
+		return tmpl.render.funcMaps
+	}
+
+	var funcMap = tmpl.funcMap
+	for key, value := range tmpl.funcMap {
+		funcMap[key] = value
+	}
+	return funcMap
+}
+
+func (tmpl *Template) Funcs(funcMap template.FuncMap) *Template {
+	tmpl.funcMap = funcMap
+	return tmpl
 }
 
 func (tmpl *Template) Execute(name string, context interface{}, request *http.Request, writer http.ResponseWriter) (err error) {
@@ -31,7 +49,7 @@ func (tmpl *Template) Execute(name string, context interface{}, request *http.Re
 		}
 
 		// funcMaps
-		var funcMap = tmpl.render.funcMaps
+		var funcMap = tmpl.FuncMap()
 		funcMap["render"] = func(name string, objs ...interface{}) (template.HTML, error) {
 			var (
 				err       error
@@ -66,7 +84,7 @@ func (tmpl *Template) Execute(name string, context interface{}, request *http.Re
 
 		// parse templates
 		var t *template.Template
-		if t, err = template.New(filepath.Base(layout)).Funcs(tmpl.render.funcMaps).ParseFiles(filenames...); err == nil {
+		if t, err = template.New(filepath.Base(layout)).Funcs(funcMap).ParseFiles(filenames...); err == nil {
 			err = t.Execute(writer, obj)
 		}
 	}

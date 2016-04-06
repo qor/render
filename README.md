@@ -13,6 +13,8 @@ func main() {
   Render.Execute("index", obj, request, writer)
 
   Render.Layout("application").Execute("index", obj, request, writer)
+
+  Render.Layout("application").Funcs(funcsMap).Execute("index", obj, request, writer)
 }
 ```
 

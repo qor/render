@@ -23,6 +23,10 @@ func (render *Render) Layout(name string) *Template {
 	return &Template{render: render, layout: name}
 }
 
+func (render *Render) Funcs(funcMap template.FuncMap) *Template {
+	return render.Layout("application").Funcs(funcMap)
+}
+
 func (render *Render) Execute(name string, context interface{}, request *http.Request, writer http.ResponseWriter) error {
 	return render.Layout("application").Execute(name, context, request, writer)
 }
