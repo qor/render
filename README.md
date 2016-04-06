@@ -9,14 +9,13 @@ import "github.com/qor/render"
 
 func main() {
   Render := render.New()
-  Render.Layout("application").Render("index", request, writer)
+
+  Render.Execute("index", obj, request, writer)
+
+  Render.Layout("application").Execute("index", obj, request, writer)
 }
 ```
 
-// http.StatusOK, template name, context, request, writer
+## License
 
-## TODO
-
-* Handle locales
-* Response to different content type `index.tmpl`, `index.mobile.tmpl`, `index.mobile+xml.tmpl`
-* Bindata
+Released under the [MIT License](http://opensource.org/licenses/MIT).
