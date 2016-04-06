@@ -14,34 +14,43 @@ type Template struct {
 	layout string
 }
 
-func (tmpl *Template) Render(name string, context interface{}, request *http.Request, writer http.ResponseWriter) (err error) {
+func (tmpl *Template) Execute(name string, context interface{}, request *http.Request, writer http.ResponseWriter) (err error) {
 	if filename, ok := tmpl.findTemplate(name); ok {
+		// filenames
 		var filenames = []string{filename}
-		if name, ok := tmpl.findTemplate(filepath.Join("layouts", tmpl.layout)); ok {
-			filenames = append(filenames, name)
+		var layout string
+		if layout, ok = tmpl.findTemplate(filepath.Join("layouts", tmpl.layout)); ok {
+			filenames = append(filenames, layout)
 		}
 
-		var t *template.Template
+		var result = map[string]interface{}{
+			"Template": filename,
+			"Result":   context,
+		}
+
+		// funcMaps
 		var funcMap = tmpl.render.funcMaps
-		funcMap["render"] = func(name string) template.HTML {
+		funcMap["render"] = func(name string) (template.HTML, error) {
 			var err error
+
 			if filename, ok := tmpl.findTemplate(name); ok {
 				var partialTemplate *template.Template
 				result := bytes.NewBufferString("")
 				if partialTemplate, err = template.New(filepath.Base(filename)).Funcs(funcMap).ParseFiles(filename); err == nil {
-					partialTemplate.Execute(result, context)
-					return template.HTML(result.String())
+					partialTemplate.Execute(result, result)
+					return template.HTML(result.String()), nil
 				}
+			} else {
+				err = fmt.Errorf("failed to find template: %v", name)
 			}
 
-			if err != nil {
-				fmt.Printf("failed to find template %v\n", name)
-			}
-			return ""
+			return "", err
 		}
 
-		if t, err = template.New(filepath.Base(filename)).Funcs(tmpl.render.funcMaps).ParseFiles(filenames...); err == nil {
-			err = t.Execute(writer, context)
+		// parse templates
+		var t *template.Template
+		if t, err = template.New(filepath.Base(layout)).Funcs(tmpl.render.funcMaps).ParseFiles(filenames...); err == nil {
+			err = t.Execute(writer, result)
 		}
 	}
 
