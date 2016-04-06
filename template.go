@@ -17,11 +17,13 @@ type Template struct {
 func (tmpl *Template) Execute(name string, context interface{}, request *http.Request, writer http.ResponseWriter) (err error) {
 	if filename, ok := tmpl.findTemplate(name); ok {
 		// filenames
-		var filenames = []string{filename}
+		var filenames []string
 		var layout string
 		if layout, ok = tmpl.findTemplate(filepath.Join("layouts", tmpl.layout)); ok {
 			filenames = append(filenames, layout)
 		}
+		// append templates to last, then it could be used to overwrite layouts templates
+		filenames = append(filenames, filename)
 
 		var obj = map[string]interface{}{
 			"Template": name,
