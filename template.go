@@ -30,14 +30,28 @@ func (tmpl *Template) Execute(name string, context interface{}, request *http.Re
 
 		// funcMaps
 		var funcMap = tmpl.render.funcMaps
-		funcMap["render"] = func(name string) (template.HTML, error) {
-			var err error
+		funcMap["render"] = func(name string, objs ...interface{}) (template.HTML, error) {
+			var (
+				err       error
+				renderObj interface{}
+			)
+
+			if len(objs) == 0 {
+				// default obj
+				renderObj = obj
+			} else {
+				// overwrite obj
+				for _, o := range objs {
+					renderObj = o
+					break
+				}
+			}
 
 			if filename, ok := tmpl.findTemplate(name); ok {
 				var partialTemplate *template.Template
 				result := bytes.NewBufferString("")
 				if partialTemplate, err = template.New(filepath.Base(filename)).Funcs(funcMap).ParseFiles(filename); err == nil {
-					if err = partialTemplate.Execute(result, obj); err == nil {
+					if err = partialTemplate.Execute(result, renderObj); err == nil {
 						return template.HTML(result.String()), err
 					}
 				}
