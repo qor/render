@@ -1,6 +1,6 @@
 # Render
 
-Render Templates (WIP)
+Render Templates
 
 ## Usage
 

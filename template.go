@@ -15,23 +15,26 @@ type Template struct {
 	funcMap template.FuncMap
 }
 
+// FuncMap get func maps from tmpl
 func (tmpl *Template) FuncMap() template.FuncMap {
 	if tmpl.funcMap == nil {
 		return tmpl.render.funcMaps
 	}
 
 	var funcMap = tmpl.funcMap
-	for key, value := range tmpl.funcMap {
+	for key, value := range tmpl.render.funcMaps {
 		funcMap[key] = value
 	}
 	return funcMap
 }
 
+// Funcs register Funcs for tmpl
 func (tmpl *Template) Funcs(funcMap template.FuncMap) *Template {
 	tmpl.funcMap = funcMap
 	return tmpl
 }
 
+// Execute execute tmpl
 func (tmpl *Template) Execute(name string, context interface{}, request *http.Request, writer http.ResponseWriter) (err error) {
 	if filename, ok := tmpl.findTemplate(name); ok {
 		// filenames
