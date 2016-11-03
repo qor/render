@@ -1,22 +1,10 @@
 # Render
 
-Render Templates
+Render support to render templates by your control.
 
-## Usage
+## Documentation
 
-```go
-import "github.com/qor/render"
-
-func main() {
-  Render := render.New()
-
-  Render.Execute("index", obj, request, writer)
-
-  Render.Layout("application").Execute("index", obj, request, writer)
-
-  Render.Layout("application").Funcs(funcsMap).Execute("index", obj, request, writer)
-}
-```
+<https://doc.getqor.com/helpers/render.html>
 
 ## License
 
