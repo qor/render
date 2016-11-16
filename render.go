@@ -7,6 +7,9 @@ import (
 	"path/filepath"
 )
 
+const DefaultLayout = "application"
+const DefaultViewPath = "app/views"
+
 // Render the render struct.
 type Render struct {
 	ViewPaths []string
@@ -15,8 +18,8 @@ type Render struct {
 
 // New initalize the render struct.
 func New(viewPaths ...string) *Render {
-	if isExistingDir(filepath.Join(root, "app/views")) {
-		viewPaths = append(viewPaths, filepath.Join(root, "app/views"))
+	if isExistingDir(filepath.Join(root, DefaultViewPath)) {
+		viewPaths = append(viewPaths, filepath.Join(root, DefaultViewPath))
 	}
 
 	return &Render{ViewPaths: viewPaths, funcMaps: map[string]interface{}{}}
@@ -29,12 +32,12 @@ func (render *Render) Layout(name string) *Template {
 
 // Funcs set helper functions for template with default "application" layout.
 func (render *Render) Funcs(funcMap template.FuncMap) *Template {
-	return render.Layout("application").Funcs(funcMap)
+	return render.Layout(DefaultLayout).Funcs(funcMap)
 }
 
 // Execute render template with default "application" layout.
 func (render *Render) Execute(name string, context interface{}, request *http.Request, writer http.ResponseWriter) error {
-	return render.Layout("application").Execute(name, context, request, writer)
+	return render.Layout(DefaultLayout).Execute(name, context, request, writer)
 }
 
 // RegisterFuncMap register FuncMap for render.
