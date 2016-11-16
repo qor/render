@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"net/http/httptest"
+	"net/textproto"
 )
 
 func TestExecute(t *testing.T) {
@@ -16,8 +17,7 @@ func TestExecute(t *testing.T) {
 	tmpl := Render.Layout("layout_for_test")
 	tmpl.Execute("test", context, request, responseWriter)
 
-	// fmt.Println(tmpl.render.funcMaps["render"]())
-	// fmt.Println(responseWriter)
-
-	// t.Errorf("WIP")
+	if textproto.TrimString(responseWriter.Body.String()) != "Template for test" {
+		t.Errorf("The template isn't rendered")
+	}
 }
