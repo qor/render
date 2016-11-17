@@ -1,6 +1,7 @@
 package render
 
 import (
+	"regexp"
 	"testing"
 
 	"net/http/httptest"
@@ -19,5 +20,23 @@ func TestExecute(t *testing.T) {
 
 	if textproto.TrimString(responseWriter.Body.String()) != "Template for test" {
 		t.Errorf("The template isn't rendered")
+	}
+}
+
+func TestErrorMessageWhenMissingLayout(t *testing.T) {
+	Render := New("test")
+
+	request := httptest.NewRequest("GET", "/test", nil)
+	responseWriter := httptest.NewRecorder()
+	var context interface{}
+
+	not_exist_layout := "ThePlant"
+	tmpl := Render.Layout(not_exist_layout)
+	err := tmpl.Execute("test", context, request, responseWriter)
+
+	errorRegexp := "Cannot find layout template in.+" + not_exist_layout + ".*"
+
+	if matched, _ := regexp.MatchString(errorRegexp, err.Error()); !matched {
+		t.Errorf("Missing layout error message is incorrect")
 	}
 }
