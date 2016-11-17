@@ -46,9 +46,9 @@ func (tmpl *Template) Execute(name string, context interface{}, request *http.Re
 			filenames = append(filenames, layout)
 		} else {
 			if absoluteLayoutPath, pathErr := filepath.Abs(layoutPath); pathErr == nil {
-				err = fmt.Errorf("Cannot find layout template in '%v'", absoluteLayoutPath)
+				err = fmt.Errorf("Cannot find layout: '%v.tmpl'", absoluteLayoutPath)
 			} else {
-				err = fmt.Errorf("Cannot find layout template in '%v'", layoutPath)
+				err = fmt.Errorf("Cannot find layout: '%v.tmpl'", layoutPath)
 			}
 
 			fmt.Println("Got error when finding layout:", err)
