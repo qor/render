@@ -51,7 +51,7 @@ func (tmpl *Template) Execute(name string, context interface{}, request *http.Re
 				err = fmt.Errorf("Cannot find layout template in '%v'", layoutPath)
 			}
 
-			fmt.Println("Got error when fetching layout:", err)
+			fmt.Println("Got error when finding layout:", err)
 			return err
 		}
 
