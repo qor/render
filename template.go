@@ -90,6 +90,8 @@ func (tmpl *Template) Execute(name string, context interface{}, request *http.Re
 		if t, err = template.New(filepath.Base(layout)).Funcs(funcMap).ParseFiles(filenames...); err == nil {
 			err = t.Execute(writer, obj)
 		}
+	} else {
+		err = fmt.Errorf("failed to find template: %v", name)
 	}
 
 	if err != nil {
