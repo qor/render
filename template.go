@@ -40,9 +40,21 @@ func (tmpl *Template) Execute(name string, context interface{}, request *http.Re
 		// filenames
 		var filenames []string
 		var layout string
-		if layout, ok = tmpl.findTemplate(filepath.Join("layouts", tmpl.layout)); ok {
+		layoutPath := filepath.Join("layouts", tmpl.layout)
+
+		if layout, ok = tmpl.findTemplate(layoutPath); ok {
 			filenames = append(filenames, layout)
+		} else {
+			if absoluteLayoutPath, pathErr := filepath.Abs(layoutPath); pathErr == nil {
+				err = fmt.Errorf("Cannot find layout: '%v.tmpl'", absoluteLayoutPath)
+			} else {
+				err = fmt.Errorf("Cannot find layout: '%v.tmpl'", layoutPath)
+			}
+
+			fmt.Println("Got error when finding layout:", err)
+			return err
 		}
+
 		// append templates to last, then it could be used to overwrite layouts templates
 		filenames = append(filenames, filename)
 
