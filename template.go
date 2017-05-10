@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
-	"os"
 	"path/filepath"
 )
 
+// Template template struct
 type Template struct {
 	render  *Render
 	layout  string
@@ -36,14 +36,17 @@ func (tmpl *Template) Funcs(funcMap template.FuncMap) *Template {
 
 // Execute execute tmpl
 func (tmpl *Template) Execute(name string, context interface{}, request *http.Request, writer http.ResponseWriter) (err error) {
-	if filename, ok := tmpl.findTemplate(name); ok {
+	if content, err := tmpl.findTemplate(name); err == nil {
 		// filenames
-		var filenames []string
-		var layout string
+		var (
+			contents      []string
+			layoutContent string = fmt.Sprintf("{{render %q}}", name)
+		)
+
 		layoutPath := filepath.Join("layouts", tmpl.layout)
 
-		if layout, ok = tmpl.findTemplate(layoutPath); ok {
-			filenames = append(filenames, layout)
+		if b, err := tmpl.findTemplate(layoutPath); err == nil {
+			layoutContent = string(b)
 		} else {
 			if absoluteLayoutPath, pathErr := filepath.Abs(layoutPath); pathErr == nil {
 				err = fmt.Errorf("Cannot find layout: '%v.tmpl'", absoluteLayoutPath)
@@ -56,7 +59,7 @@ func (tmpl *Template) Execute(name string, context interface{}, request *http.Re
 		}
 
 		// append templates to last, then it could be used to overwrite layouts templates
-		filenames = append(filenames, filename)
+		contents = append(contents, string(content))
 
 		var obj = map[string]interface{}{
 			"Template": name,
@@ -82,10 +85,10 @@ func (tmpl *Template) Execute(name string, context interface{}, request *http.Re
 				}
 			}
 
-			if filename, ok := tmpl.findTemplate(name); ok {
+			if renderContent, err := tmpl.findTemplate(name); err == nil {
 				var partialTemplate *template.Template
 				result := bytes.NewBufferString("")
-				if partialTemplate, err = template.New(filepath.Base(filename)).Funcs(funcMap).ParseFiles(filename); err == nil {
+				if partialTemplate, err = template.New(filepath.Base(name)).Funcs(funcMap).Parse(string(renderContent)); err == nil {
 					if err = partialTemplate.Execute(result, renderObj); err == nil {
 						return template.HTML(result.String()), err
 					}
@@ -99,7 +102,7 @@ func (tmpl *Template) Execute(name string, context interface{}, request *http.Re
 
 		// parse templates
 		var t *template.Template
-		if t, err = template.New(filepath.Base(layout)).Funcs(funcMap).ParseFiles(filenames...); err == nil {
+		if t, err = template.New("").Funcs(funcMap).Parse(layoutContent); err == nil {
 			err = t.Execute(writer, obj)
 		}
 	} else {
@@ -112,13 +115,6 @@ func (tmpl *Template) Execute(name string, context interface{}, request *http.Re
 	return err
 }
 
-func (tmpl *Template) findTemplate(name string) (string, bool) {
-	name = name + ".tmpl"
-	for _, viewPath := range tmpl.render.ViewPaths {
-		filename := filepath.Join(viewPath, name)
-		if _, err := os.Stat(filename); !os.IsNotExist(err) {
-			return filename, true
-		}
-	}
-	return "", false
+func (tmpl *Template) findTemplate(name string) ([]byte, error) {
+	return tmpl.render.AssetFileSystem.Asset(name + ".tmpl")
 }

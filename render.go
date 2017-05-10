@@ -1,18 +1,25 @@
-// Render support to render templates by your control.
+// Package render support to render templates by your control.
 package render
 
 import (
 	"html/template"
 	"net/http"
 	"path/filepath"
+
+	"github.com/qor/admin"
 )
 
+// DefaultLayout default layout name
 const DefaultLayout = "application"
+
+// DefaultViewPath default view path
 const DefaultViewPath = "app/views"
 
 // Render the render struct.
 type Render struct {
-	ViewPaths []string
+	AssetFileSystem admin.AssetFSInterface
+
+	viewPaths []string
 	funcMaps  template.FuncMap
 }
 
@@ -22,7 +29,21 @@ func New(viewPaths ...string) *Render {
 		viewPaths = append(viewPaths, filepath.Join(root, DefaultViewPath))
 	}
 
-	return &Render{ViewPaths: viewPaths, funcMaps: map[string]interface{}{}}
+	render := &Render{viewPaths: viewPaths, funcMaps: map[string]interface{}{}}
+	render.SetAssetFS(&admin.AssetFileSystem{})
+
+	return render
+}
+
+// SetAssetFS set asset fs for render
+func (render *Render) SetAssetFS(assetFS admin.AssetFSInterface) {
+	for _, viewPath := range render.viewPaths {
+		assetFS.RegisterPath(viewPath)
+	}
+
+	assetFS.Compile()
+
+	render.AssetFileSystem = assetFS
 }
 
 // Layout set layout for template.
