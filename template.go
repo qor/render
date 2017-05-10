@@ -36,83 +36,66 @@ func (tmpl *Template) Funcs(funcMap template.FuncMap) *Template {
 
 // Execute execute tmpl
 func (tmpl *Template) Execute(name string, context interface{}, request *http.Request, writer http.ResponseWriter) (err error) {
-	if content, err := tmpl.findTemplate(name); err == nil {
-		// filenames
+	var obj = map[string]interface{}{
+		"Template": name,
+		"Result":   context,
+	}
+
+	// funcMaps
+	var funcMap = tmpl.FuncMap()
+	funcMap["render"] = func(name string, objs ...interface{}) (template.HTML, error) {
 		var (
-			contents      []string
-			layoutContent string = fmt.Sprintf("{{render %q}}", name)
+			err       error
+			renderObj interface{}
 		)
 
-		layoutPath := filepath.Join("layouts", tmpl.layout)
-
-		if b, err := tmpl.findTemplate(layoutPath); err == nil {
-			layoutContent = string(b)
+		if len(objs) == 0 {
+			// default obj
+			renderObj = obj
 		} else {
-			if absoluteLayoutPath, pathErr := filepath.Abs(layoutPath); pathErr == nil {
-				err = fmt.Errorf("Cannot find layout: '%v.tmpl'", absoluteLayoutPath)
-			} else {
-				err = fmt.Errorf("Cannot find layout: '%v.tmpl'", layoutPath)
+			// overwrite obj
+			for _, o := range objs {
+				renderObj = o
+				break
 			}
+		}
 
-			fmt.Println("Got error when finding layout:", err)
+		if renderContent, err := tmpl.findTemplate(name); err == nil {
+			var partialTemplate *template.Template
+			result := bytes.NewBufferString("")
+			if partialTemplate, err = template.New(filepath.Base(name)).Funcs(funcMap).Parse(string(renderContent)); err == nil {
+				if err = partialTemplate.Execute(result, renderObj); err == nil {
+					return template.HTML(result.String()), err
+				}
+			}
+		} else {
+			err = fmt.Errorf("failed to find template: %v", name)
+		}
+
+		return "", err
+	}
+
+	if tmpl.layout != "" {
+		if b, err := tmpl.findTemplate(filepath.Join("layouts", tmpl.layout)); err == nil {
+			if t, err := template.New("").Funcs(funcMap).Parse(string(b)); err == nil {
+				return t.Execute(writer, obj)
+			} else {
+				return err
+			}
+		} else {
+			err := fmt.Errorf("haven't found layout: '%v.tmpl'\n", filepath.Join("layouts", tmpl.layout))
+			fmt.Println(err)
 			return err
 		}
-
-		// append templates to last, then it could be used to overwrite layouts templates
-		contents = append(contents, string(content))
-
-		var obj = map[string]interface{}{
-			"Template": name,
-			"Result":   context,
-		}
-
-		// funcMaps
-		var funcMap = tmpl.FuncMap()
-		funcMap["render"] = func(name string, objs ...interface{}) (template.HTML, error) {
-			var (
-				err       error
-				renderObj interface{}
-			)
-
-			if len(objs) == 0 {
-				// default obj
-				renderObj = obj
-			} else {
-				// overwrite obj
-				for _, o := range objs {
-					renderObj = o
-					break
-				}
-			}
-
-			if renderContent, err := tmpl.findTemplate(name); err == nil {
-				var partialTemplate *template.Template
-				result := bytes.NewBufferString("")
-				if partialTemplate, err = template.New(filepath.Base(name)).Funcs(funcMap).Parse(string(renderContent)); err == nil {
-					if err = partialTemplate.Execute(result, renderObj); err == nil {
-						return template.HTML(result.String()), err
-					}
-				}
-			} else {
-				err = fmt.Errorf("failed to find template: %v", name)
-			}
-
-			return "", err
-		}
-
-		// parse templates
-		var t *template.Template
-		if t, err = template.New("").Funcs(funcMap).Parse(layoutContent); err == nil {
-			err = t.Execute(writer, obj)
+	} else if content, err := tmpl.findTemplate(name); err == nil {
+		if t, err := template.New("").Funcs(funcMap).Parse(string(content)); err == nil {
+			return t.Execute(writer, obj)
+		} else {
+			return err
 		}
 	} else {
-		err = fmt.Errorf("failed to find template: %v", name)
+		return fmt.Errorf("failed to find template: %v", name)
 	}
-
-	if err != nil {
-		fmt.Printf("Got error when render template %v: %v\n", name, err)
-	}
-	return err
 }
 
 func (tmpl *Template) findTemplate(name string) ([]byte, error) {
