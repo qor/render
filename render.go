@@ -41,8 +41,6 @@ func (render *Render) SetAssetFS(assetFS admin.AssetFSInterface) {
 		assetFS.RegisterPath(viewPath)
 	}
 
-	assetFS.Compile()
-
 	render.AssetFileSystem = assetFS
 }
 
