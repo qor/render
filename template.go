@@ -80,6 +80,7 @@ func (tmpl *Template) Execute(name string, context interface{}, request *http.Re
 			if t, err := template.New("").Funcs(funcMap).Parse(string(b)); err == nil {
 				return t.Execute(writer, obj)
 			} else {
+				fmt.Println(err)
 				return err
 			}
 		} else {
@@ -91,6 +92,7 @@ func (tmpl *Template) Execute(name string, context interface{}, request *http.Re
 		if t, err := template.New("").Funcs(funcMap).Parse(string(content)); err == nil {
 			return t.Execute(writer, obj)
 		} else {
+			fmt.Println(err)
 			return err
 		}
 	} else {
