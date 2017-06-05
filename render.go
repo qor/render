@@ -47,6 +47,8 @@ func (render *Render) RegisterViewPath(pth string) {
 		if absPath, err := filepath.Abs(pth); err == nil && isExistingDir(absPath) {
 			render.viewPaths = append(render.viewPaths, absPath)
 			render.AssetFileSystem.RegisterPath(absPath)
+		} else if isExistingDir(filepath.Join(root, "vendor", pth)) {
+			render.AssetFileSystem.RegisterPath(filepath.Join(root, "vendor", pth))
 		} else {
 			for _, gopath := range strings.Split(os.Getenv("GOPATH"), ":") {
 				if p := path.Join(gopath, "src", pth); isExistingDir(p) {
