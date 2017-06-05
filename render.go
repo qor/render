@@ -4,7 +4,10 @@ package render
 import (
 	"html/template"
 	"net/http"
+	"os"
+	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/qor/admin"
 )
@@ -25,20 +28,34 @@ type Render struct {
 
 // New initalize the render struct.
 func New(viewPaths ...string) *Render {
-	if isExistingDir(filepath.Join(root, DefaultViewPath)) {
-		viewPaths = append(viewPaths, filepath.Join(root, DefaultViewPath))
-	}
-
-	render := &Render{viewPaths: viewPaths, funcMaps: map[string]interface{}{}}
+	render := &Render{funcMaps: map[string]interface{}{}}
 	render.SetAssetFS(&admin.AssetFileSystem{})
+
+	for _, viewPath := range append(viewPaths, filepath.Join(root, DefaultViewPath)) {
+		render.RegisterViewPath(viewPath)
+	}
 
 	return render
 }
 
 // RegisterViewPath register view path
 func (render *Render) RegisterViewPath(pth string) {
-	render.viewPaths = append(render.viewPaths, pth)
-	render.AssetFileSystem.RegisterPath(pth)
+	if filepath.IsAbs(pth) {
+		render.viewPaths = append(render.viewPaths, pth)
+		render.AssetFileSystem.RegisterPath(pth)
+	} else {
+		if absPath, err := filepath.Abs(pth); err == nil && isExistingDir(absPath) {
+			render.viewPaths = append(render.viewPaths, absPath)
+			render.AssetFileSystem.RegisterPath(absPath)
+		} else {
+			for _, gopath := range strings.Split(os.Getenv("GOPATH"), ":") {
+				if p := path.Join(gopath, "src", pth); isExistingDir(p) {
+					render.viewPaths = append(render.viewPaths, p)
+					render.AssetFileSystem.RegisterPath(p)
+				}
+			}
+		}
+	}
 }
 
 // SetAssetFS set asset fs for render
