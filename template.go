@@ -16,14 +16,21 @@ type Template struct {
 }
 
 // FuncMap get func maps from tmpl
-func (tmpl *Template) FuncMap() template.FuncMap {
-	if tmpl.funcMap == nil {
-		return tmpl.render.funcMaps
+func (tmpl *Template) funcMapMaker(req *http.Request, writer http.ResponseWriter) template.FuncMap {
+	var funcMap = template.FuncMap{}
+
+	for key, fc := range tmpl.render.funcMaps {
+		funcMap[key] = fc
 	}
 
-	var funcMap = tmpl.funcMap
-	for key, value := range tmpl.render.funcMaps {
-		funcMap[key] = value
+	if tmpl.render.Config.FuncMapMaker != nil {
+		for key, fc := range tmpl.render.Config.FuncMapMaker(tmpl.render, req, writer) {
+			funcMap[key] = fc
+		}
+	}
+
+	for key, fc := range tmpl.funcMap {
+		funcMap[key] = fc
 	}
 	return funcMap
 }
@@ -42,7 +49,7 @@ func (tmpl *Template) Execute(name string, context interface{}, request *http.Re
 	}
 
 	// funcMaps
-	var funcMap = tmpl.FuncMap()
+	var funcMap = tmpl.funcMapMaker(request, writer)
 	funcMap["render"] = func(name string, objs ...interface{}) (template.HTML, error) {
 		var (
 			err       error
@@ -101,5 +108,5 @@ func (tmpl *Template) Execute(name string, context interface{}, request *http.Re
 }
 
 func (tmpl *Template) findTemplate(name string) ([]byte, error) {
-	return tmpl.render.AssetFileSystem.Asset(name + ".tmpl")
+	return tmpl.render.assetFileSystem.Asset(name + ".tmpl")
 }

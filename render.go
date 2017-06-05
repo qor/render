@@ -18,9 +18,15 @@ const DefaultLayout = "application"
 // DefaultViewPath default view path
 const DefaultViewPath = "app/views"
 
+// Config render config
+type Config struct {
+	FuncMapMaker    func(render *Render, request *http.Request, writer http.ResponseWriter) template.FuncMap
+	assetFileSystem admin.AssetFSInterface
+}
+
 // Render the render struct.
 type Render struct {
-	AssetFileSystem admin.AssetFSInterface
+	*Config
 
 	viewPaths []string
 	funcMaps  template.FuncMap
@@ -28,7 +34,7 @@ type Render struct {
 
 // New initalize the render struct.
 func New(viewPaths ...string) *Render {
-	render := &Render{funcMaps: map[string]interface{}{}}
+	render := &Render{funcMaps: map[string]interface{}{}, Config: &Config{}}
 	render.SetAssetFS(&admin.AssetFileSystem{})
 
 	for _, viewPath := range append(viewPaths, filepath.Join(root, DefaultViewPath)) {
@@ -39,21 +45,23 @@ func New(viewPaths ...string) *Render {
 }
 
 // RegisterViewPath register view path
-func (render *Render) RegisterViewPath(pth string) {
-	if filepath.IsAbs(pth) {
-		render.viewPaths = append(render.viewPaths, pth)
-		render.AssetFileSystem.RegisterPath(pth)
-	} else {
-		if absPath, err := filepath.Abs(pth); err == nil && isExistingDir(absPath) {
-			render.viewPaths = append(render.viewPaths, absPath)
-			render.AssetFileSystem.RegisterPath(absPath)
-		} else if isExistingDir(filepath.Join(root, "vendor", pth)) {
-			render.AssetFileSystem.RegisterPath(filepath.Join(root, "vendor", pth))
+func (render *Render) RegisterViewPath(paths ...string) {
+	for _, pth := range paths {
+		if filepath.IsAbs(pth) {
+			render.viewPaths = append(render.viewPaths, pth)
+			render.assetFileSystem.RegisterPath(pth)
 		} else {
-			for _, gopath := range strings.Split(os.Getenv("GOPATH"), ":") {
-				if p := path.Join(gopath, "src", pth); isExistingDir(p) {
-					render.viewPaths = append(render.viewPaths, p)
-					render.AssetFileSystem.RegisterPath(p)
+			if absPath, err := filepath.Abs(pth); err == nil && isExistingDir(absPath) {
+				render.viewPaths = append(render.viewPaths, absPath)
+				render.assetFileSystem.RegisterPath(absPath)
+			} else if isExistingDir(filepath.Join(root, "vendor", pth)) {
+				render.assetFileSystem.RegisterPath(filepath.Join(root, "vendor", pth))
+			} else {
+				for _, gopath := range strings.Split(os.Getenv("GOPATH"), ":") {
+					if p := path.Join(gopath, "src", pth); isExistingDir(p) {
+						render.viewPaths = append(render.viewPaths, p)
+						render.assetFileSystem.RegisterPath(p)
+					}
 				}
 			}
 		}
@@ -66,7 +74,7 @@ func (render *Render) SetAssetFS(assetFS admin.AssetFSInterface) {
 		assetFS.RegisterPath(viewPath)
 	}
 
-	render.AssetFileSystem = assetFS
+	render.assetFileSystem = assetFS
 }
 
 // Layout set layout for template.
