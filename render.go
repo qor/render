@@ -35,6 +35,12 @@ func New(viewPaths ...string) *Render {
 	return render
 }
 
+// RegisterViewPath register view path
+func (render *Render) RegisterViewPath(pth string) {
+	render.viewPaths = append(render.viewPaths, pth)
+	render.AssetFileSystem.RegisterPath(pth)
+}
+
 // SetAssetFS set asset fs for render
 func (render *Render) SetAssetFS(assetFS admin.AssetFSInterface) {
 	for _, viewPath := range render.viewPaths {
