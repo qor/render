@@ -42,7 +42,7 @@ func (tmpl *Template) Funcs(funcMap template.FuncMap) *Template {
 }
 
 // Execute execute tmpl
-func (tmpl *Template) Execute(name string, context interface{}, request *http.Request, writer http.ResponseWriter) (err error) {
+func (tmpl *Template) Execute(name string, context interface{}, request *http.Request, writer http.ResponseWriter) error {
 	var obj = map[string]interface{}{
 		"Template": name,
 		"Result":   context,
@@ -82,29 +82,33 @@ func (tmpl *Template) Execute(name string, context interface{}, request *http.Re
 		return "", err
 	}
 
+	var (
+		content []byte
+		t       *template.Template
+		err     error
+	)
+
 	if tmpl.layout != "" {
-		if b, err := tmpl.findTemplate(filepath.Join("layouts", tmpl.layout)); err == nil {
-			if t, err := template.New("").Funcs(funcMap).Parse(string(b)); err == nil {
-				return t.Execute(writer, obj)
-			} else {
-				fmt.Println(err)
-				return err
+		if content, err = tmpl.findTemplate(filepath.Join("layouts", tmpl.layout)); err == nil {
+			if t, err = template.New("").Funcs(funcMap).Parse(string(content)); err == nil {
+				err = t.Execute(writer, obj)
 			}
 		} else {
-			err := fmt.Errorf("haven't found layout: '%v.tmpl'\n", filepath.Join("layouts", tmpl.layout))
-			fmt.Println(err)
-			return err
+			err = fmt.Errorf("haven't found layout: '%v.tmpl'\n", filepath.Join("layouts", tmpl.layout))
 		}
-	} else if content, err := tmpl.findTemplate(name); err == nil {
-		if t, err := template.New("").Funcs(funcMap).Parse(string(content)); err == nil {
-			return t.Execute(writer, obj)
-		} else {
-			fmt.Println(err)
-			return err
+	} else if content, err = tmpl.findTemplate(name); err == nil {
+		if t, err = template.New("").Funcs(funcMap).Parse(string(content)); err == nil {
+			err = t.Execute(writer, obj)
 		}
 	} else {
-		return fmt.Errorf("failed to find template: %v", name)
+		err = fmt.Errorf("failed to find template: %v", name)
 	}
+
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	return nil
 }
 
 func (tmpl *Template) findTemplate(name string) ([]byte, error) {
