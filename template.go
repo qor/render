@@ -52,8 +52,9 @@ func (tmpl *Template) Execute(name string, context interface{}, request *http.Re
 	var funcMap = tmpl.funcMapMaker(request, writer)
 	funcMap["render"] = func(name string, objs ...interface{}) (template.HTML, error) {
 		var (
-			err       error
-			renderObj interface{}
+			err           error
+			renderObj     interface{}
+			renderContent []byte
 		)
 
 		if len(objs) == 0 {
@@ -67,7 +68,7 @@ func (tmpl *Template) Execute(name string, context interface{}, request *http.Re
 			}
 		}
 
-		if renderContent, err := tmpl.findTemplate(name); err == nil {
+		if renderContent, err = tmpl.findTemplate(name); err == nil {
 			var partialTemplate *template.Template
 			result := bytes.NewBufferString("")
 			if partialTemplate, err = template.New(filepath.Base(name)).Funcs(funcMap).Parse(string(renderContent)); err == nil {
@@ -77,6 +78,10 @@ func (tmpl *Template) Execute(name string, context interface{}, request *http.Re
 			}
 		} else {
 			err = fmt.Errorf("failed to find template: %v", name)
+		}
+
+		if err != nil {
+			fmt.Println(err)
 		}
 
 		return "", err
@@ -94,7 +99,7 @@ func (tmpl *Template) Execute(name string, context interface{}, request *http.Re
 				err = t.Execute(writer, obj)
 			}
 		} else {
-			err = fmt.Errorf("haven't found layout: '%v.tmpl'\n", filepath.Join("layouts", tmpl.layout))
+			err = fmt.Errorf("haven't found layout: '%v.tmpl'", filepath.Join("layouts", tmpl.layout))
 		}
 	} else if content, err = tmpl.findTemplate(name); err == nil {
 		if t, err = template.New("").Funcs(funcMap).Parse(string(content)); err == nil {
