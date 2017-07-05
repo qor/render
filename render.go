@@ -68,6 +68,30 @@ func (render *Render) RegisterViewPath(paths ...string) {
 	}
 }
 
+// PrependViewPath prepend view path
+func (render *Render) PrependViewPath(paths ...string) {
+	for _, pth := range paths {
+		if filepath.IsAbs(pth) {
+			render.viewPaths = append([]string{pth}, render.viewPaths...)
+			render.assetFileSystem.PrependPath(pth)
+		} else {
+			if absPath, err := filepath.Abs(pth); err == nil && isExistingDir(absPath) {
+				render.viewPaths = append([]string{absPath}, render.viewPaths...)
+				render.assetFileSystem.PrependPath(absPath)
+			} else if isExistingDir(filepath.Join(root, "vendor", pth)) {
+				render.assetFileSystem.PrependPath(filepath.Join(root, "vendor", pth))
+			} else {
+				for _, gopath := range strings.Split(os.Getenv("GOPATH"), ":") {
+					if p := path.Join(gopath, "src", pth); isExistingDir(p) {
+						render.viewPaths = append([]string{p}, render.viewPaths...)
+						render.assetFileSystem.PrependPath(p)
+					}
+				}
+			}
+		}
+	}
+}
+
 // SetAssetFS set asset fs for render
 func (render *Render) SetAssetFS(assetFS admin.AssetFSInterface) {
 	for _, viewPath := range render.viewPaths {
