@@ -96,14 +96,20 @@ func (tmpl *Template) Execute(name string, context interface{}, request *http.Re
 	if tmpl.layout != "" {
 		if content, err = tmpl.findTemplate(filepath.Join("layouts", tmpl.layout)); err == nil {
 			if t, err = template.New("").Funcs(funcMap).Parse(string(content)); err == nil {
-				err = t.Execute(writer, obj)
+				var tpl bytes.Buffer
+				if err = t.Execute(&tpl, obj); err == nil {
+					_, err = writer.Write(tpl.Bytes())
+				}
 			}
 		} else {
 			err = fmt.Errorf("haven't found layout: '%v.tmpl'", filepath.Join("layouts", tmpl.layout))
 		}
 	} else if content, err = tmpl.findTemplate(name); err == nil {
 		if t, err = template.New("").Funcs(funcMap).Parse(string(content)); err == nil {
-			err = t.Execute(writer, obj)
+			var tpl bytes.Buffer
+			if err = t.Execute(&tpl, obj); err == nil {
+				_, err = writer.Write(tpl.Bytes())
+			}
 		}
 	} else {
 		err = fmt.Errorf("failed to find template: %v", name)
