@@ -11,21 +11,22 @@ import (
 
 // AssetFileSystem AssetFS based on FileSystem
 type AssetFileSystem struct {
-	Paths []string
+	paths        []string
+	nameSpacedFS map[string]Interface
 }
 
 // RegisterPath register view paths
 func (fs *AssetFileSystem) RegisterPath(pth string) error {
 	if _, err := os.Stat(pth); !os.IsNotExist(err) {
 		var existing bool
-		for _, p := range fs.Paths {
+		for _, p := range fs.paths {
 			if p == pth {
 				existing = true
 				break
 			}
 		}
 		if !existing {
-			fs.Paths = append(fs.Paths, pth)
+			fs.paths = append(fs.paths, pth)
 		}
 		return nil
 	}
@@ -36,14 +37,14 @@ func (fs *AssetFileSystem) RegisterPath(pth string) error {
 func (fs *AssetFileSystem) PrependPath(pth string) error {
 	if _, err := os.Stat(pth); !os.IsNotExist(err) {
 		var existing bool
-		for _, p := range fs.Paths {
+		for _, p := range fs.paths {
 			if p == pth {
 				existing = true
 				break
 			}
 		}
 		if !existing {
-			fs.Paths = append([]string{pth}, fs.Paths...)
+			fs.paths = append([]string{pth}, fs.paths...)
 		}
 		return nil
 	}
@@ -52,7 +53,7 @@ func (fs *AssetFileSystem) PrependPath(pth string) error {
 
 // Asset get content with name from assetfs
 func (fs *AssetFileSystem) Asset(name string) ([]byte, error) {
-	for _, pth := range fs.Paths {
+	for _, pth := range fs.paths {
 		if _, err := os.Stat(filepath.Join(pth, name)); err == nil {
 			return ioutil.ReadFile(filepath.Join(pth, name))
 		}
@@ -62,7 +63,7 @@ func (fs *AssetFileSystem) Asset(name string) ([]byte, error) {
 
 // Glob list matched files from assetfs
 func (fs *AssetFileSystem) Glob(pattern string) (matches []string, err error) {
-	for _, pth := range fs.Paths {
+	for _, pth := range fs.paths {
 		if results, err := filepath.Glob(filepath.Join(pth, pattern)); err == nil {
 			for _, result := range results {
 				matches = append(matches, strings.TrimPrefix(result, pth))
@@ -75,4 +76,13 @@ func (fs *AssetFileSystem) Glob(pattern string) (matches []string, err error) {
 // Compile compile assetfs
 func (fs *AssetFileSystem) Compile() error {
 	return nil
+}
+
+// NameSpace return namespaced filesystem
+func (fs *AssetFileSystem) NameSpace(nameSpace string) Interface {
+	if fs.nameSpacedFS == nil {
+		fs.nameSpacedFS = map[string]Interface{}
+	}
+	fs.nameSpacedFS[nameSpace] = &AssetFileSystem{}
+	return fs.nameSpacedFS[nameSpace]
 }

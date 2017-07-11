@@ -7,6 +7,8 @@ type Interface interface {
 	Asset(name string) ([]byte, error)
 	Glob(pattern string) (matches []string, err error)
 	Compile() error
+
+	NameSpace(nameSpace string) Interface
 }
 
 // AssetFS default assetfs
