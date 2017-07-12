@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/qor/admin"
+	"github.com/qor/assetfs"
 )
 
 // DefaultLayout default layout name
@@ -21,7 +21,7 @@ const DefaultViewPath = "app/views"
 // Config render config
 type Config struct {
 	FuncMapMaker    func(render *Render, request *http.Request, writer http.ResponseWriter) template.FuncMap
-	assetFileSystem admin.AssetFSInterface
+	assetFileSystem assetfs.Interface
 }
 
 // Render the render struct.
@@ -35,7 +35,7 @@ type Render struct {
 // New initalize the render struct.
 func New(viewPaths ...string) *Render {
 	render := &Render{funcMaps: map[string]interface{}{}, Config: &Config{}}
-	render.SetAssetFS(&admin.AssetFileSystem{})
+	render.SetAssetFS(assetfs.AssetFS.NameSpace("views"))
 
 	for _, viewPath := range append(viewPaths, filepath.Join(root, DefaultViewPath)) {
 		render.RegisterViewPath(viewPath)
@@ -93,7 +93,7 @@ func (render *Render) PrependViewPath(paths ...string) {
 }
 
 // SetAssetFS set asset fs for render
-func (render *Render) SetAssetFS(assetFS admin.AssetFSInterface) {
+func (render *Render) SetAssetFS(assetFS assetfs.Interface) {
 	for _, viewPath := range render.viewPaths {
 		assetFS.RegisterPath(viewPath)
 	}
