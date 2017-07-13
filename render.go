@@ -35,7 +35,7 @@ type Render struct {
 // New initalize the render struct.
 func New(viewPaths ...string) *Render {
 	render := &Render{funcMaps: map[string]interface{}{}, Config: &Config{}}
-	render.SetAssetFS(assetfs.AssetFS.NameSpace("views"))
+	render.SetAssetFS(assetfs.AssetFS().NameSpace("views"))
 
 	for _, viewPath := range append(viewPaths, filepath.Join(root, DefaultViewPath)) {
 		render.RegisterViewPath(viewPath)
