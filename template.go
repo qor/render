@@ -42,56 +42,53 @@ func (tmpl *Template) Funcs(funcMap template.FuncMap) *Template {
 }
 
 // Execute execute tmpl
-func (tmpl *Template) Execute(name string, context interface{}, request *http.Request, writer http.ResponseWriter) error {
-	var obj = map[string]interface{}{
-		"Template": name,
-		"Result":   context,
-	}
-
-	// funcMaps
-	var funcMap = tmpl.funcMapMaker(request, writer)
-	funcMap["render"] = func(name string, objs ...interface{}) (template.HTML, error) {
-		var (
-			err           error
-			renderObj     interface{}
-			renderContent []byte
-		)
-
-		if len(objs) == 0 {
-			// default obj
-			renderObj = obj
-		} else {
-			// overwrite obj
-			for _, o := range objs {
-				renderObj = o
-				break
-			}
-		}
-
-		if renderContent, err = tmpl.findTemplate(name); err == nil {
-			var partialTemplate *template.Template
-			result := bytes.NewBufferString("")
-			if partialTemplate, err = template.New(filepath.Base(name)).Funcs(funcMap).Parse(string(renderContent)); err == nil {
-				if err = partialTemplate.Execute(result, renderObj); err == nil {
-					return template.HTML(result.String()), err
-				}
-			}
-		} else {
-			err = fmt.Errorf("failed to find template: %v", name)
-		}
-
-		if err != nil {
-			fmt.Println(err)
-		}
-
-		return "", err
-	}
-
+func (tmpl *Template) Execute(templateName string, obj interface{}, request *http.Request, writer http.ResponseWriter) error {
 	var (
 		content []byte
 		t       *template.Template
 		err     error
+		funcMap = tmpl.funcMapMaker(request, writer)
+		render  = func(name string, objs ...interface{}) (template.HTML, error) {
+			var (
+				err           error
+				renderObj     interface{}
+				renderContent []byte
+			)
+
+			if len(objs) == 0 {
+				// default obj
+				renderObj = obj
+			} else {
+				// overwrite obj
+				for _, o := range objs {
+					renderObj = o
+					break
+				}
+			}
+
+			if renderContent, err = tmpl.findTemplate(name); err == nil {
+				var partialTemplate *template.Template
+				result := bytes.NewBufferString("")
+				if partialTemplate, err = template.New(filepath.Base(name)).Funcs(funcMap).Parse(string(renderContent)); err == nil {
+					if err = partialTemplate.Execute(result, renderObj); err == nil {
+						return template.HTML(result.String()), err
+					}
+				}
+			} else {
+				err = fmt.Errorf("failed to find template: %v", name)
+			}
+
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			return "", err
+		}
 	)
+
+	// funcMaps
+	funcMap["render"] = render
+	funcMap["render_content"] = func() (template.HTML, error) { return render(templateName) }
 
 	if tmpl.layout != "" {
 		if content, err = tmpl.findTemplate(filepath.Join("layouts", tmpl.layout)); err == nil {
@@ -104,7 +101,7 @@ func (tmpl *Template) Execute(name string, context interface{}, request *http.Re
 		} else {
 			err = fmt.Errorf("haven't found layout: '%v.tmpl'", filepath.Join("layouts", tmpl.layout))
 		}
-	} else if content, err = tmpl.findTemplate(name); err == nil {
+	} else if content, err = tmpl.findTemplate(templateName); err == nil {
 		if t, err = template.New("").Funcs(funcMap).Parse(string(content)); err == nil {
 			var tpl bytes.Buffer
 			if err = t.Execute(&tpl, obj); err == nil {
@@ -112,7 +109,7 @@ func (tmpl *Template) Execute(name string, context interface{}, request *http.Re
 			}
 		}
 	} else {
-		err = fmt.Errorf("failed to find template: %v", name)
+		err = fmt.Errorf("failed to find template: %v", templateName)
 	}
 
 	if err != nil {
