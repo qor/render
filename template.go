@@ -88,7 +88,7 @@ func (tmpl *Template) Execute(templateName string, obj interface{}, request *htt
 
 	// funcMaps
 	funcMap["render"] = render
-	funcMap["render_content"] = func() (template.HTML, error) { return render(templateName) }
+	funcMap["yield"] = func() (template.HTML, error) { return render(templateName) }
 
 	if tmpl.layout != "" {
 		if content, err = tmpl.findTemplate(filepath.Join("layouts", tmpl.layout)); err == nil {
