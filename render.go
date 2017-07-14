@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/qor/assetfs"
+	"github.com/qor/qor/utils"
 )
 
 // DefaultLayout default layout name
@@ -37,7 +38,7 @@ func New(viewPaths ...string) *Render {
 	render := &Render{funcMaps: map[string]interface{}{}, Config: &Config{}}
 	render.SetAssetFS(assetfs.AssetFS().NameSpace("views"))
 
-	for _, viewPath := range append(viewPaths, filepath.Join(root, DefaultViewPath)) {
+	for _, viewPath := range append(viewPaths, filepath.Join(utils.AppRoot, DefaultViewPath)) {
 		render.RegisterViewPath(viewPath)
 	}
 
@@ -54,8 +55,8 @@ func (render *Render) RegisterViewPath(paths ...string) {
 			if absPath, err := filepath.Abs(pth); err == nil && isExistingDir(absPath) {
 				render.viewPaths = append(render.viewPaths, absPath)
 				render.assetFileSystem.RegisterPath(absPath)
-			} else if isExistingDir(filepath.Join(root, "vendor", pth)) {
-				render.assetFileSystem.RegisterPath(filepath.Join(root, "vendor", pth))
+			} else if isExistingDir(filepath.Join(utils.AppRoot, "vendor", pth)) {
+				render.assetFileSystem.RegisterPath(filepath.Join(utils.AppRoot, "vendor", pth))
 			} else {
 				for _, gopath := range strings.Split(os.Getenv("GOPATH"), ":") {
 					if p := path.Join(gopath, "src", pth); isExistingDir(p) {
@@ -78,8 +79,8 @@ func (render *Render) PrependViewPath(paths ...string) {
 			if absPath, err := filepath.Abs(pth); err == nil && isExistingDir(absPath) {
 				render.viewPaths = append([]string{absPath}, render.viewPaths...)
 				render.assetFileSystem.PrependPath(absPath)
-			} else if isExistingDir(filepath.Join(root, "vendor", pth)) {
-				render.assetFileSystem.PrependPath(filepath.Join(root, "vendor", pth))
+			} else if isExistingDir(filepath.Join(utils.AppRoot, "vendor", pth)) {
+				render.assetFileSystem.PrependPath(filepath.Join(utils.AppRoot, "vendor", pth))
 			} else {
 				for _, gopath := range strings.Split(os.Getenv("GOPATH"), ":") {
 					if p := path.Join(gopath, "src", pth); isExistingDir(p) {
