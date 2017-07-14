@@ -41,8 +41,8 @@ func (tmpl *Template) Funcs(funcMap template.FuncMap) *Template {
 	return tmpl
 }
 
-// Execute execute tmpl
-func (tmpl *Template) Execute(templateName string, obj interface{}, request *http.Request, writer http.ResponseWriter) error {
+// Render render tmpl
+func (tmpl *Template) Render(templateName string, obj interface{}, request *http.Request, writer http.ResponseWriter) (template.HTML, error) {
 	var (
 		content []byte
 		t       *template.Template
@@ -95,7 +95,7 @@ func (tmpl *Template) Execute(templateName string, obj interface{}, request *htt
 			if t, err = template.New("").Funcs(funcMap).Parse(string(content)); err == nil {
 				var tpl bytes.Buffer
 				if err = t.Execute(&tpl, obj); err == nil {
-					_, err = writer.Write(tpl.Bytes())
+					return template.HTML(tpl.String()), nil
 				}
 			}
 		} else {
@@ -105,7 +105,7 @@ func (tmpl *Template) Execute(templateName string, obj interface{}, request *htt
 		if t, err = template.New("").Funcs(funcMap).Parse(string(content)); err == nil {
 			var tpl bytes.Buffer
 			if err = t.Execute(&tpl, obj); err == nil {
-				_, err = writer.Write(tpl.Bytes())
+				return template.HTML(tpl.String()), nil
 			}
 		}
 	} else {
@@ -114,9 +114,17 @@ func (tmpl *Template) Execute(templateName string, obj interface{}, request *htt
 
 	if err != nil {
 		fmt.Println(err)
-		return err
 	}
-	return nil
+	return template.HTML(""), err
+}
+
+// Execute execute tmpl
+func (tmpl *Template) Execute(templateName string, obj interface{}, req *http.Request, w http.ResponseWriter) error {
+	result, err := tmpl.Render(templateName, obj, req, w)
+	if err == nil {
+		_, err = w.Write([]byte(result))
+	}
+	return err
 }
 
 func (tmpl *Template) findTemplate(name string) ([]byte, error) {
