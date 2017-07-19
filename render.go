@@ -21,8 +21,9 @@ const DefaultViewPath = "app/views"
 
 // Config render config
 type Config struct {
-	FuncMapMaker    func(render *Render, request *http.Request, writer http.ResponseWriter) template.FuncMap
-	assetFileSystem assetfs.Interface
+	IgnoreLayoutError bool
+	FuncMapMaker      func(render *Render, request *http.Request, writer http.ResponseWriter) template.FuncMap
+	assetFileSystem   assetfs.Interface
 }
 
 // Render the render struct.
@@ -104,7 +105,7 @@ func (render *Render) SetAssetFS(assetFS assetfs.Interface) {
 
 // Layout set layout for template.
 func (render *Render) Layout(name string) *Template {
-	return &Template{render: render, layout: name}
+	return &Template{render: render, layout: name, ignoreLayoutError: render.IgnoreLayoutError}
 }
 
 // Funcs set helper functions for template with default "application" layout.
