@@ -92,7 +92,10 @@ func (tmpl *Template) Render(templateName string, obj interface{}, request *http
 	funcMap["yield"] = func() (template.HTML, error) { return render(templateName) }
 
 	layout := tmpl.layout
+	usingDefaultLayout := false
+
 	if layout == "" && tmpl.usingDefaultLayout {
+		usingDefaultLayout = true
 		layout = tmpl.render.DefaultLayout
 	}
 
@@ -105,7 +108,7 @@ func (tmpl *Template) Render(templateName string, obj interface{}, request *http
 					return template.HTML(tpl.String()), nil
 				}
 			}
-		} else {
+		} else if !usingDefaultLayout {
 			err = fmt.Errorf("Failed to render layout: '%v.tmpl', got error: %v", filepath.Join("layouts", tmpl.layout), err)
 			fmt.Println(err)
 			return template.HTML(""), err
