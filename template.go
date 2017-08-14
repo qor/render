@@ -10,10 +10,10 @@ import (
 
 // Template template struct
 type Template struct {
-	render            *Render
-	ignoreLayoutError bool
-	layout            string
-	funcMap           template.FuncMap
+	render             *Render
+	layout             string
+	usingDefaultLayout bool
+	funcMap            template.FuncMap
 }
 
 // FuncMap get func maps from tmpl
@@ -91,8 +91,13 @@ func (tmpl *Template) Render(templateName string, obj interface{}, request *http
 	funcMap["render"] = render
 	funcMap["yield"] = func() (template.HTML, error) { return render(templateName) }
 
-	if tmpl.layout != "" {
-		content, err = tmpl.findTemplate(filepath.Join("layouts", tmpl.layout))
+	layout := tmpl.layout
+	if layout == "" && tmpl.usingDefaultLayout {
+		layout = tmpl.render.DefaultLayout
+	}
+
+	if layout != "" {
+		content, err = tmpl.findTemplate(filepath.Join("layouts", layout))
 		if err == nil {
 			if t, err = template.New("").Funcs(funcMap).Parse(string(content)); err == nil {
 				var tpl bytes.Buffer
@@ -100,8 +105,8 @@ func (tmpl *Template) Render(templateName string, obj interface{}, request *http
 					return template.HTML(tpl.String()), nil
 				}
 			}
-		} else if !tmpl.ignoreLayoutError {
-			err = fmt.Errorf("haven't found layout: '%v.tmpl'", filepath.Join("layouts", tmpl.layout))
+		} else {
+			err = fmt.Errorf("Failed to render layout: '%v.tmpl', got error: %v", filepath.Join("layouts", tmpl.layout), err)
 			fmt.Println(err)
 			return template.HTML(""), err
 		}

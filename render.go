@@ -21,11 +21,10 @@ const DefaultViewPath = "app/views"
 
 // Config render config
 type Config struct {
-	IgnoreLayoutError bool
-	ViewPaths         []string
-	DefaultLayout     string
-	FuncMapMaker      func(render *Render, request *http.Request, writer http.ResponseWriter) template.FuncMap
-	assetFileSystem   assetfs.Interface
+	ViewPaths       []string
+	DefaultLayout   string
+	FuncMapMaker    func(render *Render, request *http.Request, writer http.ResponseWriter) template.FuncMap
+	assetFileSystem assetfs.Interface
 }
 
 // Render the render struct.
@@ -116,17 +115,19 @@ func (render *Render) SetAssetFS(assetFS assetfs.Interface) {
 
 // Layout set layout for template.
 func (render *Render) Layout(name string) *Template {
-	return &Template{render: render, layout: name, ignoreLayoutError: render.IgnoreLayoutError}
+	return &Template{render: render, layout: name}
 }
 
 // Funcs set helper functions for template with default "application" layout.
 func (render *Render) Funcs(funcMap template.FuncMap) *Template {
-	return render.Layout(render.Config.DefaultLayout).Funcs(funcMap)
+	tmpl := &Template{render: render, usingDefaultLayout: true}
+	return tmpl.Funcs(funcMap)
 }
 
 // Execute render template with default "application" layout.
 func (render *Render) Execute(name string, context interface{}, request *http.Request, writer http.ResponseWriter) error {
-	return render.Layout(render.Config.DefaultLayout).Execute(name, context, request, writer)
+	tmpl := &Template{render: render, usingDefaultLayout: true}
+	return tmpl.Execute(name, context, request, writer)
 }
 
 // RegisterFuncMap register FuncMap for render.
