@@ -9,7 +9,7 @@ import (
 )
 
 func TestExecute(t *testing.T) {
-	Render := New("test")
+	Render := New(nil, "test")
 
 	request := httptest.NewRequest("GET", "/test", nil)
 	responseWriter := httptest.NewRecorder()
@@ -24,7 +24,7 @@ func TestExecute(t *testing.T) {
 }
 
 func TestErrorMessageWhenMissingLayout(t *testing.T) {
-	Render := New("test")
+	Render := New(nil, "test")
 
 	request := httptest.NewRequest("GET", "/test", nil)
 	responseWriter := httptest.NewRecorder()

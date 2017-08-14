@@ -22,6 +22,8 @@ const DefaultViewPath = "app/views"
 // Config render config
 type Config struct {
 	IgnoreLayoutError bool
+	ViewPaths         []string
+	DefaultLayout     string
 	FuncMapMaker      func(render *Render, request *http.Request, writer http.ResponseWriter) template.FuncMap
 	assetFileSystem   assetfs.Interface
 }
@@ -30,16 +32,25 @@ type Config struct {
 type Render struct {
 	*Config
 
-	viewPaths []string
-	funcMaps  template.FuncMap
+	funcMaps template.FuncMap
 }
 
 // New initalize the render struct.
-func New(viewPaths ...string) *Render {
-	render := &Render{funcMaps: map[string]interface{}{}, Config: &Config{}}
+func New(config *Config, viewPaths ...string) *Render {
+	if config == nil {
+		config = &Config{}
+	}
+
+	if config.DefaultLayout != "" {
+		config.DefaultLayout = DefaultLayout
+	}
+
+	render := &Render{funcMaps: map[string]interface{}{}, Config: config}
 	render.SetAssetFS(assetfs.AssetFS().NameSpace("views"))
 
-	for _, viewPath := range append(viewPaths, filepath.Join(utils.AppRoot, DefaultViewPath)) {
+	config.ViewPaths = append(append(config.ViewPaths, viewPaths...), DefaultViewPath)
+
+	for _, viewPath := range config.ViewPaths {
 		render.RegisterViewPath(viewPath)
 	}
 
@@ -50,18 +61,18 @@ func New(viewPaths ...string) *Render {
 func (render *Render) RegisterViewPath(paths ...string) {
 	for _, pth := range paths {
 		if filepath.IsAbs(pth) {
-			render.viewPaths = append(render.viewPaths, pth)
+			render.ViewPaths = append(render.ViewPaths, pth)
 			render.assetFileSystem.RegisterPath(pth)
 		} else {
 			if absPath, err := filepath.Abs(pth); err == nil && isExistingDir(absPath) {
-				render.viewPaths = append(render.viewPaths, absPath)
+				render.ViewPaths = append(render.ViewPaths, absPath)
 				render.assetFileSystem.RegisterPath(absPath)
 			} else if isExistingDir(filepath.Join(utils.AppRoot, "vendor", pth)) {
 				render.assetFileSystem.RegisterPath(filepath.Join(utils.AppRoot, "vendor", pth))
 			} else {
 				for _, gopath := range strings.Split(os.Getenv("GOPATH"), ":") {
 					if p := path.Join(gopath, "src", pth); isExistingDir(p) {
-						render.viewPaths = append(render.viewPaths, p)
+						render.ViewPaths = append(render.ViewPaths, p)
 						render.assetFileSystem.RegisterPath(p)
 					}
 				}
@@ -74,18 +85,18 @@ func (render *Render) RegisterViewPath(paths ...string) {
 func (render *Render) PrependViewPath(paths ...string) {
 	for _, pth := range paths {
 		if filepath.IsAbs(pth) {
-			render.viewPaths = append([]string{pth}, render.viewPaths...)
+			render.ViewPaths = append([]string{pth}, render.ViewPaths...)
 			render.assetFileSystem.PrependPath(pth)
 		} else {
 			if absPath, err := filepath.Abs(pth); err == nil && isExistingDir(absPath) {
-				render.viewPaths = append([]string{absPath}, render.viewPaths...)
+				render.ViewPaths = append([]string{absPath}, render.ViewPaths...)
 				render.assetFileSystem.PrependPath(absPath)
 			} else if isExistingDir(filepath.Join(utils.AppRoot, "vendor", pth)) {
 				render.assetFileSystem.PrependPath(filepath.Join(utils.AppRoot, "vendor", pth))
 			} else {
 				for _, gopath := range strings.Split(os.Getenv("GOPATH"), ":") {
 					if p := path.Join(gopath, "src", pth); isExistingDir(p) {
-						render.viewPaths = append([]string{p}, render.viewPaths...)
+						render.ViewPaths = append([]string{p}, render.ViewPaths...)
 						render.assetFileSystem.PrependPath(p)
 					}
 				}
@@ -96,7 +107,7 @@ func (render *Render) PrependViewPath(paths ...string) {
 
 // SetAssetFS set asset fs for render
 func (render *Render) SetAssetFS(assetFS assetfs.Interface) {
-	for _, viewPath := range render.viewPaths {
+	for _, viewPath := range render.ViewPaths {
 		assetFS.RegisterPath(viewPath)
 	}
 
@@ -110,12 +121,12 @@ func (render *Render) Layout(name string) *Template {
 
 // Funcs set helper functions for template with default "application" layout.
 func (render *Render) Funcs(funcMap template.FuncMap) *Template {
-	return render.Layout(DefaultLayout).Funcs(funcMap)
+	return render.Layout(render.Config.DefaultLayout).Funcs(funcMap)
 }
 
 // Execute render template with default "application" layout.
 func (render *Render) Execute(name string, context interface{}, request *http.Request, writer http.ResponseWriter) error {
-	return render.Layout(DefaultLayout).Execute(name, context, request, writer)
+	return render.Layout(render.Config.DefaultLayout).Execute(name, context, request, writer)
 }
 
 // RegisterFuncMap register FuncMap for render.
