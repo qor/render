@@ -125,3 +125,8 @@ func (render *Render) RegisterFuncMap(name string, fc interface{}) {
 	}
 	render.funcMaps[name] = fc
 }
+
+// Asset get content from AssetFS by name
+func (render *Render) Asset(name string) ([]byte, error) {
+	return render.assetFileSystem.Asset(name)
+}

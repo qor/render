@@ -134,5 +134,5 @@ func (tmpl *Template) Execute(templateName string, obj interface{}, req *http.Re
 }
 
 func (tmpl *Template) findTemplate(name string) ([]byte, error) {
-	return tmpl.render.assetFileSystem.Asset(name + ".tmpl")
+	return tmpl.render.Asset(name + ".tmpl")
 }
