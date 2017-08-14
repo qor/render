@@ -40,7 +40,7 @@ func New(config *Config, viewPaths ...string) *Render {
 		config = &Config{}
 	}
 
-	if config.DefaultLayout != "" {
+	if config.DefaultLayout == "" {
 		config.DefaultLayout = DefaultLayout
 	}
 
