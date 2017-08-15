@@ -136,6 +136,10 @@ func (tmpl *Template) Render(templateName string, obj interface{}, request *http
 func (tmpl *Template) Execute(templateName string, obj interface{}, req *http.Request, w http.ResponseWriter) error {
 	result, err := tmpl.Render(templateName, obj, req, w)
 	if err == nil {
+		if w.Header().Get("Content-Type") == "" {
+			w.Header().Set("Content-Type", "text/html")
+		}
+
 		_, err = w.Write([]byte(result))
 	}
 	return err
