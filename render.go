@@ -5,7 +5,6 @@ import (
 	"html/template"
 	"net/http"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -73,7 +72,7 @@ func (render *Render) RegisterViewPath(paths ...string) {
 				render.AssetFileSystem.RegisterPath(filepath.Join(utils.AppRoot, "vendor", pth))
 			} else {
 				for _, gopath := range strings.Split(os.Getenv("GOPATH"), ":") {
-					if p := path.Join(gopath, "src", pth); isExistingDir(p) {
+					if p := filepath.Join(gopath, "src", pth); isExistingDir(p) {
 						render.ViewPaths = append(render.ViewPaths, p)
 						render.AssetFileSystem.RegisterPath(p)
 					}
@@ -97,7 +96,7 @@ func (render *Render) PrependViewPath(paths ...string) {
 				render.AssetFileSystem.PrependPath(filepath.Join(utils.AppRoot, "vendor", pth))
 			} else {
 				for _, gopath := range strings.Split(os.Getenv("GOPATH"), ":") {
-					if p := path.Join(gopath, "src", pth); isExistingDir(p) {
+					if p := filepath.Join(gopath, "src", pth); isExistingDir(p) {
 						render.ViewPaths = append([]string{p}, render.ViewPaths...)
 						render.AssetFileSystem.PrependPath(p)
 					}
