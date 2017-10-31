@@ -1,6 +1,6 @@
 # Render
 
-[Render](https://github.com/qor/render) provides handy controls when rendering templates.
+Render provides handy controls when rendering templates.
 
 ## Usage
 
@@ -108,3 +108,7 @@ func main() {
 	Render.Execute("index", context, request, writer)
 }
 ```
+
+## License
+
+Released under the [MIT License](http://opensource.org/licenses/MIT).
