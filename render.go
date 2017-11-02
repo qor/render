@@ -4,9 +4,7 @@ package render
 import (
 	"html/template"
 	"net/http"
-	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/qor/assetfs"
 	"github.com/qor/qor/utils"
@@ -71,7 +69,7 @@ func (render *Render) RegisterViewPath(paths ...string) {
 			} else if isExistingDir(filepath.Join(utils.AppRoot, "vendor", pth)) {
 				render.AssetFileSystem.RegisterPath(filepath.Join(utils.AppRoot, "vendor", pth))
 			} else {
-				for _, gopath := range strings.Split(os.Getenv("GOPATH"), ":") {
+				for _, gopath := range utils.GOPATH() {
 					if p := filepath.Join(gopath, "src", pth); isExistingDir(p) {
 						render.ViewPaths = append(render.ViewPaths, p)
 						render.AssetFileSystem.RegisterPath(p)
@@ -95,7 +93,7 @@ func (render *Render) PrependViewPath(paths ...string) {
 			} else if isExistingDir(filepath.Join(utils.AppRoot, "vendor", pth)) {
 				render.AssetFileSystem.PrependPath(filepath.Join(utils.AppRoot, "vendor", pth))
 			} else {
-				for _, gopath := range strings.Split(os.Getenv("GOPATH"), ":") {
+				for _, gopath := range utils.GOPATH() {
 					if p := filepath.Join(gopath, "src", pth); isExistingDir(p) {
 						render.ViewPaths = append([]string{p}, render.ViewPaths...)
 						render.AssetFileSystem.PrependPath(p)
