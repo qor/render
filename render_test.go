@@ -32,7 +32,7 @@ func TestErrorMessageWhenMissingLayout(t *testing.T) {
 
 	not_exist_layout := "ThePlant"
 	tmpl := Render.Layout(not_exist_layout)
-	err := tmpl.Execute("test", context, request, responseWriter)
+	err := tmpl.Execute(" test", context, request, responseWriter)
 
 	errorRegexp := "Failed to render layout:.+" + not_exist_layout + ".*"
 
