@@ -68,6 +68,9 @@ func (render *Render) RegisterViewPath(paths ...string) {
 				render.AssetFileSystem.RegisterPath(absPath)
 			} else if isExistingDir(filepath.Join(utils.AppRoot, "vendor", pth)) {
 				render.AssetFileSystem.RegisterPath(filepath.Join(utils.AppRoot, "vendor", pth))
+			} else if p := filepath.Join(utils.AppRoot, pth); isExistingDir(p) { // This allows configuring correct viewpath in test. especially for test located in deep directory
+				render.ViewPaths = append([]string{p}, render.ViewPaths...)
+				render.AssetFileSystem.PrependPath(filepath.Join(utils.AppRoot, pth))
 			} else {
 				for _, gopath := range utils.GOPATH() {
 					if p := filepath.Join(gopath, "src", pth); isExistingDir(p) {
