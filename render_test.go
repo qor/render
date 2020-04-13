@@ -30,11 +30,29 @@ func TestErrorMessageWhenMissingLayout(t *testing.T) {
 	responseWriter := httptest.NewRecorder()
 	var context interface{}
 
-	not_exist_layout := "ThePlant"
-	tmpl := Render.Layout(not_exist_layout)
+	nonExistLayout := "ThePlant"
+	tmpl := Render.Layout(nonExistLayout)
 	err := tmpl.Execute(" test", context, request, responseWriter)
 
-	errorRegexp := "Failed to render layout:.+" + not_exist_layout + ".*"
+	errorRegexp := "Failed to render layout:.+" + nonExistLayout + ".*"
+
+	if matched, _ := regexp.MatchString(errorRegexp, err.Error()); !matched {
+		t.Errorf("Missing layout error message is incorrect")
+	}
+}
+
+func TestErrorMessageWhenLayoutContainsError(t *testing.T) {
+	Render := New(nil, "test")
+
+	request := httptest.NewRequest("GET", "/test", nil)
+	responseWriter := httptest.NewRecorder()
+	var context interface{}
+
+	layoutContainsError := "layout_contains_error"
+	tmpl := Render.Layout(layoutContainsError)
+	err := tmpl.Execute("test", context, request, responseWriter)
+
+	errorRegexp := "Failed to render layout:.+" + layoutContainsError + ".*"
 
 	if matched, _ := regexp.MatchString(errorRegexp, err.Error()); !matched {
 		t.Errorf("Missing layout error message is incorrect")

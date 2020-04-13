@@ -100,36 +100,45 @@ func (tmpl *Template) Render(templateName string, obj interface{}, request *http
 		layout = tmpl.render.DefaultLayout
 	}
 
+	var tpl bytes.Buffer
+
 	if layout != "" {
 		content, err = tmpl.findTemplate(filepath.Join("layouts", layout))
 		if err == nil {
-			if t, err = template.New("").Funcs(funcMap).Parse(string(content)); err == nil {
-				var tpl bytes.Buffer
-				if err = t.Execute(&tpl, obj); err == nil {
-					return template.HTML(tpl.String()), nil
-				}
+			t, err = template.New("").Funcs(funcMap).Parse(string(content))
+			if err != nil {
+				goto OnError
 			}
+
+			err = t.Execute(&tpl, obj)
+			if err != nil {
+				goto OnError
+			}
+
+			return template.HTML(tpl.String()), nil
 		} else if !usingDefaultLayout {
-			err = fmt.Errorf("Failed to render layout: '%v.tmpl', got error: %v", filepath.Join("layouts", tmpl.layout), err)
-			fmt.Println(err)
-			return template.HTML(""), err
+			goto OnError
 		}
 	}
 
-	if content, err = tmpl.findTemplate(templateName); err == nil {
-		if t, err = template.New("").Funcs(funcMap).Parse(string(content)); err == nil {
-			var tpl bytes.Buffer
-			if err = t.Execute(&tpl, obj); err == nil {
-				return template.HTML(tpl.String()), nil
-			}
-		}
-	} else {
-		err = fmt.Errorf("failed to find template: %v", templateName)
-	}
-
+	content, err = tmpl.findTemplate(templateName)
 	if err != nil {
-		fmt.Println(err)
+		goto OnError
 	}
+	t, err = template.New("").Funcs(funcMap).Parse(string(content))
+	if err != nil {
+		goto OnError
+	}
+
+	err = t.Execute(&tpl, obj)
+	if err != nil {
+		goto OnError
+	}
+	return template.HTML(tpl.String()), nil
+
+OnError:
+	err = fmt.Errorf("Failed to render layout: '%v.tmpl', got error: %v", filepath.Join("layouts", tmpl.layout), err)
+	fmt.Println(err)
 	return template.HTML(""), err
 }
 
