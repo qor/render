@@ -45,7 +45,9 @@ func New(config *Config, viewPaths ...string) *Render {
 		config.AssetFileSystem = assetfs.AssetFS().NameSpace("views")
 	}
 
-	config.ViewPaths = append(append(config.ViewPaths, viewPaths...), DefaultViewPath)
+	if len(config.ViewPaths) == 0 {
+		config.ViewPaths = append(append(config.ViewPaths, viewPaths...), DefaultViewPath)
+	}
 
 	render := &Render{funcMaps: map[string]interface{}{}, Config: config}
 
