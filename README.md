@@ -2,6 +2,8 @@
 
 Render provides handy controls when rendering templates.
 
+[![Build Status](https://travis-ci.com/qor/render.svg?branch=master)](https://travis-ci.com/qor/render)
+
 ## Usage
 
 ### Initialize [Render](https://github.com/qor/render)
