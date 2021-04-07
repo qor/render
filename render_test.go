@@ -1,6 +1,7 @@
 package render
 
 import (
+	"io/ioutil"
 	"regexp"
 	"testing"
 
@@ -30,13 +31,50 @@ func TestErrorMessageWhenMissingLayout(t *testing.T) {
 	responseWriter := httptest.NewRecorder()
 	var context interface{}
 
-	not_exist_layout := "ThePlant"
-	tmpl := Render.Layout(not_exist_layout)
-	err := tmpl.Execute(" test", context, request, responseWriter)
+	nonExistLayout := "ThePlant"
+	tmpl := Render.Layout(nonExistLayout)
+	err := tmpl.Execute("test", context, request, responseWriter)
+	if err != nil {
+		t.Error("we don't return error, we render the error on page instead")
+	}
 
-	errorRegexp := "Failed to render layout:.+" + not_exist_layout + ".*"
+	bodyBytes, err1 := ioutil.ReadAll(responseWriter.Result().Body)
+	if err1 != nil {
+		t.Fatal(err1)
+	}
+	bodyString := string(bodyBytes)
 
-	if matched, _ := regexp.MatchString(errorRegexp, err.Error()); !matched {
+	errorRegexp := "Failed to render page.+" + nonExistLayout + ".*"
+
+	if matched, _ := regexp.MatchString(errorRegexp, bodyString); !matched {
+		t.Errorf("Missing layout error message is incorrect")
+	}
+}
+
+func TestErrorMessageWhenLayoutContainsError(t *testing.T) {
+	Render := New(nil, "test")
+
+	request := httptest.NewRequest("GET", "/test", nil)
+	responseWriter := httptest.NewRecorder()
+	var context interface{}
+
+	layoutContainsError := "layout_contains_error"
+	tmpl := Render.Layout(layoutContainsError)
+	err := tmpl.Execute("test", context, request, responseWriter)
+
+	if err != nil {
+		t.Error("we don't return error, we render the error on page instead")
+	}
+
+	bodyBytes, err1 := ioutil.ReadAll(responseWriter.Result().Body)
+	if err1 != nil {
+		t.Fatal(err1)
+	}
+	bodyString := string(bodyBytes)
+
+	errorRegexp := "Failed to render page.+" + layoutContainsError + ".*"
+
+	if matched, _ := regexp.MatchString(errorRegexp, bodyString); !matched {
 		t.Errorf("Missing layout error message is incorrect")
 	}
 }
