@@ -137,9 +137,10 @@ func (tmpl *Template) Render(templateName string, obj interface{}, request *http
 	return template.HTML(tpl.String()), nil
 
 OnError:
-	err = fmt.Errorf("Failed to render layout: '%v.tmpl', got error: %v", filepath.Join("layouts", tmpl.layout), err)
+	err = fmt.Errorf("Failed to render page '%v' with template '%v.tmpl', got error: %v", templateName, filepath.Join("layouts", tmpl.layout), err)
 	fmt.Println(err)
-	return template.HTML(""), err
+	// Display error in page directly
+	return template.HTML(err.Error()), nil
 }
 
 // Execute execute tmpl
